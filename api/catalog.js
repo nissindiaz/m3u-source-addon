@@ -21,7 +21,7 @@ module.exports = (req, res) => {
   let searchTerm = '';
   if (extra) {
     const m = extra.match(/search=([^&]+)/);
-    if (m) searchTerm = decodeURIComponent(m[1].replace(/\+/g, ' '));
+    if (m) searchTerm = decodeURIComponent(m[1].replace(/\+/g, ' ').replace(/\.json$/, ''));
   }
 
   // Sem busca → retorna lista vazia (catálogo não aparece no browse)
