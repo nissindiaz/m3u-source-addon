@@ -1,0 +1,48 @@
+name: Atualizar índice M3U
+
+on:
+  # Roda todo dia às 04:00 (horário UTC = 01:00 Brasília)
+  schedule:
+    - cron: '0 4 * * *'
+
+  # Permite rodar manualmente pelo GitHub (útil para testar)
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Baixar M3U e gerar index.json
+        env:
+          XTREAM_URL:  ${{ secrets.XTREAM_URL }}
+          XTREAM_USER: ${{ secrets.XTREAM_USER }}
+          XTREAM_PASS: ${{ secrets.XTREAM_PASS }}
+        run: node scripts/fetch-and-parse.js
+
+      - name: Verificar se houve mudanças
+        id: changes
+        run: |
+          git diff --quiet data/index.json && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit e push do novo index.json
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/index.json
+          git commit -m "chore: atualiza índice M3U [$(date -u '+%Y-%m-%d %H:%M UTC')]"
+          git push
+
+      - name: Sem mudanças no M3U
+        if: steps.changes.outputs.changed == 'false'
+        run: echo "ℹ️ Nenhuma mudança no M3U, deploy não necessário."

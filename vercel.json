@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/manifest.json",            "destination": "/api/manifest" },
+    { "source": "/catalog/:type/:id.json",   "destination": "/api/catalog?type=:type&id=:id" },
+    { "source": "/catalog/:type/:id/:extra", "destination": "/api/catalog?type=:type&id=:id&extra=:extra" },
+    { "source": "/meta/:type/:id.json",      "destination": "/api/meta?type=:type&id=:id" },
+    { "source": "/stream/:type/:id.json",    "destination": "/api/stream?type=:type&id=:id" }
+  ],
+  "functions": {
+    "api/catalog.js": { "maxDuration": 10, "memory": 512 },
+    "api/meta.js":    { "maxDuration": 10, "memory": 512 },
+    "api/stream.js":  { "maxDuration": 10, "memory": 512 }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "m3u-source-addon",
+  "version": "1.0.0",
+  "description": "Stremio addon fonte — busca séries, animes e filmes via M3U",
+  "main": "api/manifest.js",
+  "engines": { "node": "20.x" }
+}
