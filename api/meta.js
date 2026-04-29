@@ -1,5 +1,8 @@
 const path = require('path');
-const data = require(path.join(process.cwd(), 'data/index.json'));
+const data   = require(path.join(process.cwd(), 'data/index.json'));
+const sports = require(path.join(process.cwd(), 'data/sports.json'));
+const sportsByCat = {};
+sports.forEach(cat => { sportsByCat[cat.id] = cat; });
 
 // Índices em memória para lookup rápido
 // Séries: m3u:s:<key>
@@ -77,6 +80,29 @@ module.exports = (req, res) => {
         name: movie.title,
         poster: movie.poster || null,
         genres: ['M3U Source']
+      }
+    });
+  }
+
+  // ── ESPORTE: id formato "sport:<catId>:<index>" ───────────────────────────
+  if (type === 'tv' && id.startsWith('sport:')) {
+    const parts  = id.split(':');
+    const catId  = parts[1];
+    const idx    = parseInt(parts[2], 10);
+    const cat    = sportsByCat[catId];
+    if (!cat) return res.json({ meta: null });
+    const game = cat.games[idx];
+    if (!game) return res.json({ meta: null });
+
+    return res.json({
+      meta: {
+        id,
+        type: 'tv',
+        name: game.title,
+        poster: game.poster || null,
+        background: game.poster || null,
+        description: game.time ? `🕐 Horário: ${game.time}\n📡 ${game.streams.length} sinal(is) disponível(is)` : `📡 ${game.streams.length} sinal(is) disponível(is)`,
+        genres: [cat.name.replace(/^.+?\s/, '')]
       }
     });
   }

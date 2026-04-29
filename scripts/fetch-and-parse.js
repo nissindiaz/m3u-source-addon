@@ -154,14 +154,26 @@ function parse(m3uText) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
+const { parseSports } = require('./parse-sports');
+
 (async () => {
   try {
     const m3uText = await download(M3U_URL);
+    const lines   = m3uText.split('\n');
+
+    // Séries + Filmes
     const index   = parse(m3uText);
     const outPath = path.join(__dirname, '..', 'data', 'index.json');
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, JSON.stringify(index));
-    console.log(`💾 Salvo em ${outPath} (${(fs.statSync(outPath).size / 1024 / 1024).toFixed(1)} MB)`);
+    console.log(`💾 index.json (${(fs.statSync(outPath).size / 1024 / 1024).toFixed(1)} MB)`);
+
+    // Esportes
+    const sports      = parseSports(lines);
+    const sportsPath  = path.join(__dirname, '..', 'data', 'sports.json');
+    fs.writeFileSync(sportsPath, JSON.stringify(sports));
+    const totalGames  = sports.reduce((acc, c) => acc + c.games.length, 0);
+    console.log(`💾 sports.json — ${sports.length} categorias, ${totalGames} jogos/canais`);
   } catch (err) {
     console.error('❌ Erro:', err.message);
     process.exit(1);

@@ -1,6 +1,9 @@
 const https = require('https');
 const path  = require('path');
-const data  = require(path.join(process.cwd(), 'data/index.json'));
+const data   = require(path.join(process.cwd(), 'data/index.json'));
+const sports = require(path.join(process.cwd(), 'data/sports.json'));
+const sportsByCat = {};
+sports.forEach(cat => { sportsByCat[cat.id] = cat; });
 
 // ─── Índice de busca por título normalizado ────────────────────────────────
 function norm(str) {
@@ -108,6 +111,26 @@ module.exports = async (req, res) => {
       url: m.url,
       name: 'M3U Source',
       title: m.title,
+      behaviorHints: { notWebReady: false }
+    }));
+
+    return res.json({ streams });
+  }
+
+  // ── ESPORTE: id formato "sport:<catId>:<index>" ───────────────────────────
+  if (type === 'tv' && id.startsWith('sport:')) {
+    const parts = id.split(':');
+    const catId = parts[1];
+    const idx   = parseInt(parts[2], 10);
+    const cat   = sportsByCat[catId];
+    if (!cat) return res.json({ streams: [] });
+    const game = cat.games[idx];
+    if (!game) return res.json({ streams: [] });
+
+    const streams = game.streams.map(s => ({
+      url: s.url,
+      name: 'M3U Source',
+      title: s.label,
       behaviorHints: { notWebReady: false }
     }));
 

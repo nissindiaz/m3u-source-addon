@@ -1,5 +1,10 @@
 const path = require('path');
-const data = require(path.join(process.cwd(), 'data/index.json'));
+const data   = require(path.join(process.cwd(), 'data/index.json'));
+const sports = require(path.join(process.cwd(), 'data/sports.json'));
+
+// Índice de esportes por catId
+const sportsByCat = {};
+sports.forEach(cat => { sportsByCat[cat.id] = cat; });
 
 // Normaliza string para busca: minúsculas, sem acentos, sem pontuação especial
 function norm(str) {
@@ -22,6 +27,27 @@ module.exports = (req, res) => {
   if (extra) {
     const m = extra.match(/search=([^&]+)/);
     if (m) searchTerm = decodeURIComponent(m[1].replace(/\+/g, ' ').replace(/\.json$/, ''));
+  }
+
+  // ── ESPORTES: não precisa de busca, exibe tudo no browse ────────────────
+  if (type === 'tv' && id.startsWith('sport-')) {
+    const catId = id.replace('sport-', '');
+    const cat   = sportsByCat[catId];
+    if (!cat) return res.json({ metas: [] });
+
+    const metas = cat.games.map((game, i) => ({
+      id: `sport:${catId}:${i}`,
+      type: 'tv',
+      name: game.title,
+      poster: game.poster || null,
+      description: [
+        game.time ? `🕐 ${game.time}` : null,
+        game.streams.length > 1 ? `${game.streams.length} sinais` : null
+      ].filter(Boolean).join(' • '),
+      genres: [cat.name.replace(/^.+?\s/, '')]
+    }));
+
+    return res.json({ metas });
   }
 
   // Sem busca → retorna lista vazia (catálogo não aparece no browse)
