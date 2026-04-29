@@ -5,12 +5,12 @@ module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
-  // Catálogos de esportes — um por categoria
+  // Catálogos de esportes — aparece no browse E aceita busca por clube/time
   const sportCatalogs = sports.map(cat => ({
     type: 'tv',
     id:   `sport-${cat.id}`,
     name: cat.name,
-    extra: []                    // aparece no browse normalmente
+    extra: [{ name: 'search', isRequired: false }]
   }));
 
   res.json({

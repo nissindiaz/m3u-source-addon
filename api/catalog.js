@@ -29,12 +29,40 @@ module.exports = (req, res) => {
     if (m) searchTerm = decodeURIComponent(m[1].replace(/\+/g, ' ').replace(/\.json$/, ''));
   }
 
-  // ── ESPORTES: não precisa de busca, exibe tudo no browse ────────────────
+  // ── ESPORTES: browse completo ou filtrado por busca ─────────────────────
   if (type === 'tv' && id.startsWith('sport-')) {
     const catId = id.replace('sport-', '');
     const cat   = sportsByCat[catId];
     if (!cat) return res.json({ metas: [] });
 
+    // Se há busca, filtra por nome do time/jogo em TODOS os esportes
+    let games;
+    if (searchTerm) {
+      const q = norm(searchTerm);
+      // Busca em todas as categorias esportivas, não só a atual
+      const allGames = [];
+      Object.values(sportsByCat).forEach(c => {
+        c.games.forEach((game, i) => {
+          if (norm(game.title).includes(q)) {
+            allGames.push({ game, catId: c.id, i });
+          }
+        });
+      });
+      games = allGames.map(({ game, catId: cid, i }) => ({
+        id: `sport:${cid}:${i}`,
+        type: 'tv',
+        name: game.title,
+        poster: game.poster || null,
+        description: [
+          game.time ? `🕐 ${game.time}` : null,
+          game.streams.length > 1 ? `📡 ${game.streams.length} sinais` : null
+        ].filter(Boolean).join(' • '),
+        genres: [sportsByCat[cid]?.name.replace(/^\S+\s/, '') || cid]
+      }));
+      return res.json({ metas: games });
+    }
+
+    // Sem busca: exibe todos os jogos da categoria
     const metas = cat.games.map((game, i) => ({
       id: `sport:${catId}:${i}`,
       type: 'tv',
@@ -42,9 +70,9 @@ module.exports = (req, res) => {
       poster: game.poster || null,
       description: [
         game.time ? `🕐 ${game.time}` : null,
-        game.streams.length > 1 ? `${game.streams.length} sinais` : null
+        game.streams.length > 1 ? `📡 ${game.streams.length} sinais` : null
       ].filter(Boolean).join(' • '),
-      genres: [cat.name.replace(/^.+?\s/, '')]
+      genres: [cat.name.replace(/^\S+\s/, '')]
     }));
 
     return res.json({ metas });
